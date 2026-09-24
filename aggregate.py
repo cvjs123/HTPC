@@ -3,8 +3,25 @@ import openpyxl
 from openpyxl.utils import get_column_letter
 import os
 import re
-from tkinter import messagebox
 from datetime import date
+
+try:
+    from tkinter import messagebox
+except ImportError:
+    class _HeadlessMessageBox:
+        @staticmethod
+        def showinfo(*args, **kwargs):
+            return None
+
+        @staticmethod
+        def showwarning(*args, **kwargs):
+            return None
+
+        @staticmethod
+        def showerror(*args, **kwargs):
+            return None
+
+    messagebox = _HeadlessMessageBox()
 
 def aggregate_m1_m2(tong_file, m1_template_path, m2_template_path, output_dir):
     try:

@@ -1,7 +1,23 @@
-import tkinter as tk
-from tkinter import filedialog, messagebox
-import ttkbootstrap as ttk
-from ttkbootstrap.constants import *
+try:
+    import tkinter as tk
+    from tkinter import filedialog, messagebox
+    import ttkbootstrap as ttk
+    from ttkbootstrap.constants import *
+    GUI_AVAILABLE = True
+except ImportError:
+    tk = None
+    filedialog = None
+    messagebox = None
+    ttk = None
+    GUI_AVAILABLE = False
+    VERTICAL = None
+    PRIMARY = "primary"
+    SUCCESS = "success"
+    WARNING = "warning"
+    DANGER = "danger"
+    INFO = "info"
+    SECONDARY = "secondary"
+
 import openpyxl
 import re
 import os
@@ -304,6 +320,8 @@ def write_to_tong(general_info, people, tong_filepath, workbook=None):
 
 class App:
     def __init__(self, root):
+        if not GUI_AVAILABLE:
+            raise RuntimeError("Desktop GUI is not available in this environment. Use the web app instead.")
         self.root = root
         self.root.title("Tổng Hợp Phiếu Điều Tra")
         self.root.geometry("700x750")
@@ -1107,6 +1125,8 @@ class App:
             messagebox.showinfo("Hoàn thành", f"Đã tổng hợp xong!\nThành công: {success_count}\nLỗi: 0")
 
 if __name__ == "__main__":
+    if not GUI_AVAILABLE:
+        raise SystemExit("Desktop GUI is unavailable in this environment. Use the web app via 'python web_app.py'.")
     app_root = ttk.Window(themename="cosmo") # Use a modern theme
     app = App(app_root)
     app_root.mainloop()
