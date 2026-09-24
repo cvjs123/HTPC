@@ -257,7 +257,8 @@ def write_to_tong(general_info, people, tong_filepath, workbook=None):
             start_write_row = r
             break
             
-    chu_ho_parts = general_info['chu_ho'].split(' ')
+    chu_ho = str(general_info.get('chu_ho') or '').strip()
+    chu_ho_parts = chu_ho.split()
     chu_ho_ten = chu_ho_parts[-1] if chu_ho_parts else ""
     chu_ho_dem = " ".join(chu_ho_parts[:-1]) if len(chu_ho_parts) > 1 else ""
             

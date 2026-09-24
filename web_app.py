@@ -34,6 +34,8 @@ def make_job_dir():
 
 
 def save_upload(file_storage, folder):
+    if file_storage is None or not getattr(file_storage, "filename", None):
+        raise ValueError("Vui lòng chọn file Excel .xlsx hợp lệ.")
     filename = secure_filename(file_storage.filename or "file.xlsx")
     if not filename.lower().endswith(".xlsx") or filename.startswith("~$"):
         raise ValueError("Chỉ hỗ trợ file Excel .xlsx")
@@ -87,8 +89,15 @@ def get_template_path(uploaded_file, fallback_name):
 
 
 def build_tong(phieu_files, tong_template):
+    if not phieu_files:
+        raise ValueError("Vui lòng chọn ít nhất một file phiếu .xlsx.")
+
+    template_path = Path(str(tong_template))
+    if not template_path.exists() or not template_path.is_file():
+        raise ValueError("Không tìm thấy file mẫu Tong.xlsx để tổng hợp.")
+
     output_path = OUTPUT_DIR / f"KetQua_Tong_{uuid.uuid4().hex[:8]}.xlsx"
-    shutil.copy2(tong_template, output_path)
+    shutil.copy2(template_path, output_path)
     workbook = openpyxl.load_workbook(output_path)
     if workbook.active.max_row > 4:
         workbook.active.delete_rows(5, workbook.active.max_row - 4)
@@ -273,6 +282,8 @@ def aggregate_forms():
             template = str(template_path)
         output, success, errors = build_tong(forms, template)
         return jsonify({"message": f"Đã tổng hợp {success} phiếu.", "success": success, "errors": errors, "download_url": f"/download/{output.name}"})
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
     except Exception as error:
         return jsonify({"error": f"Không thể tổng hợp: {error}"}), 500
 
