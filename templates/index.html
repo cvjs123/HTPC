@@ -23,6 +23,25 @@
     <footer>Ứng dụng xử lý nội bộ trên máy đang chạy webapp. File không được gửi lên dịch vụ bên ngoài.</footer>
   </main>
   <script>
+    async function readJsonResponse(response) {
+      const text = await response.text();
+      if (!text) {
+        if (response.ok) {
+          throw new Error('Máy chủ trả về phản hồi rỗng.');
+        }
+        throw new Error(`Máy chủ trả về lỗi HTTP ${response.status}.`);
+      }
+      try {
+        return JSON.parse(text);
+      } catch (error) {
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          throw new Error('Phản hồi JSON không hợp lệ từ máy chủ.');
+        }
+        throw new Error(response.ok ? 'Máy chủ trả về nội dung không hợp lệ.' : `Máy chủ trả về lỗi HTTP ${response.status}.`);
+      }
+    }
+
     document.querySelectorAll('input[type=file]').forEach(input => input.addEventListener('change', () => {
       const label = input.closest('label');
       const fileNames = [...input.files].map(file => file.name);
@@ -30,8 +49,8 @@
       const textNode = label.querySelector('[data-file-label]');
       if (textNode) textNode.textContent = labelText;
     }));
-    document.querySelectorAll('.operation-form').forEach(form => form.addEventListener('submit', async event => { event.preventDefault(); const button = form.querySelector('button[type=submit]'); const result = form.parentElement.querySelector('[data-result]'); button.disabled = true; result.className = 'operation-result loading'; result.textContent = 'Đang xử lý...'; try { const response = await fetch(`/api/${form.dataset.api}`, { method: 'POST', body: new FormData(form) }); const data = await response.json(); if (!response.ok) throw new Error(data.error || 'Có lỗi xảy ra'); if (form.dataset.api === 'ra-soat') { result.className = 'operation-result success'; const links = data.download_url ? [`<a href="${data.download_url}">Tải file rà soát</a>`] : []; result.innerHTML = `<strong>✓ ${data.message}</strong>${links.length ? `<div class="downloads">${links.join('')}</div>` : ''}`; return; } const links = data.downloads ? data.downloads : [{ name: 'Tải KetQua_Tong.xlsx', url: data.download_url }]; result.className = 'operation-result success'; result.innerHTML = `<strong>✓ ${data.message}</strong><span>${data.errors?.length || 0} phiếu lỗi.</span><div class="downloads">${links.map(item => `<a href="${item.url}">Tải ${item.name}</a>`).join('')}</div>`; } catch (error) { result.className = 'operation-result failure'; result.textContent = error.message; } finally { button.disabled = false; } }));
-    document.querySelectorAll('[data-export-review]').forEach(button => { button.addEventListener('click', async () => { const form = button.closest('form'); const result = form.parentElement.querySelector('[data-result]'); result.className = 'operation-result loading'; result.textContent = 'Đang xuất file rà soát...'; try { const response = await fetch('/api/ra-soat/export', { method: 'POST', body: new FormData(form) }); const data = await response.json(); if (!response.ok) throw new Error(data.error || 'Có lỗi xảy ra'); result.className = 'operation-result success'; result.innerHTML = data.download_url ? `<strong>✓ ${data.message}</strong><div class="downloads"><a href="${data.download_url}">Tải file rà soát</a></div>` : `<strong>✓ ${data.message}</strong>`; } catch (error) { result.className = 'operation-result failure'; result.textContent = error.message; } }); });
+    document.querySelectorAll('.operation-form').forEach(form => form.addEventListener('submit', async event => { event.preventDefault(); const button = form.querySelector('button[type=submit]'); const result = form.parentElement.querySelector('[data-result]'); button.disabled = true; result.className = 'operation-result loading'; result.textContent = 'Đang xử lý...'; try { const response = await fetch(`/api/${form.dataset.api}`, { method: 'POST', body: new FormData(form) }); const data = await readJsonResponse(response); if (!response.ok) throw new Error(data.error || 'Có lỗi xảy ra'); if (form.dataset.api === 'ra-soat') { result.className = 'operation-result success'; const links = data.download_url ? [`<a href="${data.download_url}">Tải file rà soát</a>`] : []; result.innerHTML = `<strong>✓ ${data.message}</strong>${links.length ? `<div class="downloads">${links.join('')}</div>` : ''}`; return; } const links = data.downloads ? data.downloads : [{ name: 'Tải KetQua_Tong.xlsx', url: data.download_url }]; result.className = 'operation-result success'; result.innerHTML = `<strong>✓ ${data.message}</strong><span>${data.errors?.length || 0} phiếu lỗi.</span><div class="downloads">${links.map(item => `<a href="${item.url}">Tải ${item.name}</a>`).join('')}</div>`; } catch (error) { result.className = 'operation-result failure'; result.textContent = error.message; } finally { button.disabled = false; } }));
+    document.querySelectorAll('[data-export-review]').forEach(button => { button.addEventListener('click', async () => { const form = button.closest('form'); const result = form.parentElement.querySelector('[data-result]'); result.className = 'operation-result loading'; result.textContent = 'Đang xuất file rà soát...'; try { const response = await fetch('/api/ra-soat/export', { method: 'POST', body: new FormData(form) }); const data = await readJsonResponse(response); if (!response.ok) throw new Error(data.error || 'Có lỗi xảy ra'); result.className = 'operation-result success'; result.innerHTML = data.download_url ? `<strong>✓ ${data.message}</strong><div class="downloads"><a href="${data.download_url}">Tải file rà soát</a></div>` : `<strong>✓ ${data.message}</strong>`; } catch (error) { result.className = 'operation-result failure'; result.textContent = error.message; } }); });
   </script>
 </body>
 </html>

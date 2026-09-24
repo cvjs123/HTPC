@@ -20,6 +20,16 @@ app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 200 * 1024 * 1024
 
 
+@app.errorhandler(404)
+def handle_not_found(error):
+    return jsonify({"error": "Không tìm thấy tài nguyên được yêu cầu."}), 404
+
+
+@app.errorhandler(500)
+def handle_internal_error(error):
+    return jsonify({"error": "Máy chủ gặp lỗi nội bộ. Vui lòng thử lại sau."}), 500
+
+
 class SilentMessageBox:
     @staticmethod
     def showinfo(*args, **kwargs):
