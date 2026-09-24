@@ -24,9 +24,18 @@ import os
 import aggregate
 
 def parse_phieu(filepath):
+    wb = None
     try:
-        # Load the workbook
-        wb = openpyxl.load_workbook(filepath, data_only=True)
+        # Some Excel files with merged cells / complex styles can crash the default
+        # openpyxl loader in production. Try the safer read-only mode first to avoid
+        # taking down the worker process on a single bad file.
+        try:
+            wb = openpyxl.load_workbook(filepath, data_only=True, read_only=True)
+        except (ValueError, TypeError, OSError, RuntimeError, SystemExit):
+            # Fallback to the standard loader for compatibility with files that need
+            # the full workbook object, but keep the failure non-fatal.
+            wb = openpyxl.load_workbook(filepath, data_only=True)
+
         visible_sheets = [ws for ws in wb.worksheets if ws.sheet_state == "visible"]
         if not visible_sheets:
             raise ValueError("File Excel không có trang tính đang hiển thị")
@@ -241,9 +250,20 @@ def parse_phieu(filepath):
             current_row += 5
             
         return general_info, people, ""
+    except (SystemExit, KeyboardInterrupt):
+        error_message = (
+            f"Không đọc được phiếu '{os.path.basename(filepath)}': file Excel có vùng hợp ô hoặc định dạng không hỗ trợ trên máy chủ."
+        )
+        return None, None, error_message
     except Exception as e:
         error_message = f"Không đọc được phiếu '{os.path.basename(filepath)}': {e}"
         return None, None, error_message
+    finally:
+        if wb is not None:
+            try:
+                wb.close()
+            except Exception:
+                pass
 
 def write_to_tong(general_info, people, tong_filepath, workbook=None):
     wb = workbook or openpyxl.load_workbook(tong_filepath)

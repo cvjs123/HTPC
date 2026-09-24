@@ -282,7 +282,7 @@ def aggregate_forms():
             template = str(template_path)
         output, success, errors = build_tong(forms, template)
         return jsonify({"message": f"Đã tổng hợp {success} phiếu.", "success": success, "errors": errors, "download_url": f"/download/{output.name}"})
-    except ValueError as error:
+    except (ValueError, TypeError, SystemExit) as error:
         return jsonify({"error": str(error)}), 400
     except Exception as error:
         return jsonify({"error": f"Không thể tổng hợp: {error}"}), 500
