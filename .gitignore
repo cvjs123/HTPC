@@ -1,0 +1,24 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+.env
+.env.*
+.pytest_cache/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+web_uploads/
+web_outputs/
+
+*.log
+*.tmp
+*.bak
+
+# Keep project source files only
+!templates/
+!static/
